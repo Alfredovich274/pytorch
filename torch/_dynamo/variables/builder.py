@@ -1327,9 +1327,18 @@ def wrap_to_fake_tensor_and_record(
             e, is_tensor, guard_source=source.guard_source()
         )
 
-        dynamic_dims, constraint_dims = _automatic_dynamic(
-            e, tx, source.name(), static_shapes
-        )
+        dynamic_dims, constraint_dims = None, None
+        if not e.is_nested:
+            dynamic_dims, constraint_dims = _automatic_dynamic(
+                e, tx, source.name(), static_shapes
+            )
+
+        if e.is_nested:
+            if tx.output.shape_env is None:
+                unimplemented("Dynamic shapes must be enabled for nested tensors")
+
+            if not e.is_contiguous():
+                unimplemented("Only contiguous nested tensors are supported for now")
 
         log.debug(
             "wrap_to_fake %s %s %s %s",
